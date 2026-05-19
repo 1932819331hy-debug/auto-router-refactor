@@ -9,7 +9,7 @@ import {
   CapacityMeshNode,
   type CapacityMeshNodeParams,
   SimpleRouteJson,
-} from "../domain/index.ts"
+} from "../model/index.ts"
 import { AvailableSegmentPointSolver } from "../solvers/AvailableSegmentPointSolver.ts"
 import { CapacityMeshEdgeSolver2_NodeTreeOptimization } from "../solvers/CapacityMeshEdgeSolver2_NodeTreeOptimization.ts"
 import { EscapeViaLocationSolver } from "../solvers/EscapeViaLocationSolver.ts"

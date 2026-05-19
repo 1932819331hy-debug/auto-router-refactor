@@ -1,4 +1,4 @@
-import type { CapacityMeshNode } from "../domain"
+import type { CapacityMeshNode } from "../model"
 import type { CapacityMeshNodeId } from "./ids"
 
 /**

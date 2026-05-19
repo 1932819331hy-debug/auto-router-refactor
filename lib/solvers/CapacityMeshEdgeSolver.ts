@@ -1,6 +1,6 @@
 import { BaseSolver } from "@tscircuit/solver-utils"
 
-import { CapacityMeshNode } from "../domain/index.ts"
+import { CapacityMeshNode } from "../model/index.ts"
 import type { CapacityMeshEdge, CapacityMeshNodeInput } from "../types/index.ts"
 
 /**

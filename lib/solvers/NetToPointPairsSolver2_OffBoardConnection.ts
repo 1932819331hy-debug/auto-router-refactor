@@ -1,4 +1,4 @@
-import { SimpleRouteJson } from "../domain/index.ts"
+import { SimpleRouteJson } from "../model/index.ts"
 import type { ConnectionPoint } from "../types/index.ts"
 import { NetToPointPairsSolver } from "./NetToPointPairsSolver.ts"
 

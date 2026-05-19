@@ -1,6 +1,6 @@
 import { BaseSolver } from "@tscircuit/solver-utils"
 
-import { LayerMapper, Obstacle, type SimpleRouteJson } from "../domain/index.ts"
+import { LayerMapper, Obstacle, type SimpleRouteJson } from "../model/index.ts"
 import type {
   SerializedObstacle,
   SerializedSimpleRouteJson,

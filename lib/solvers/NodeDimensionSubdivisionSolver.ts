@@ -1,6 +1,6 @@
 import { BaseSolver } from "@tscircuit/solver-utils"
 
-import { CapacityMeshNode } from "../domain/index.ts"
+import { CapacityMeshNode } from "../model/index.ts"
 import type { CapacityMeshNodeInput } from "../types/index.ts"
 
 const DEFAULT_MIN_NODE_AREA = 0.1 ** 2

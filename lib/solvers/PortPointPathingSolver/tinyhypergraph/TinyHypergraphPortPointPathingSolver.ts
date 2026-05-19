@@ -3,7 +3,7 @@ import type { GraphicsObject } from "graphics-debug"
 import type {
   CapacityMeshNode,
   CapacityMeshNodeId,
-} from "../../../domain/index.ts"
+} from "../../../model/index.ts"
 import type {
   HyperGraph,
   HyperGraphConnection,

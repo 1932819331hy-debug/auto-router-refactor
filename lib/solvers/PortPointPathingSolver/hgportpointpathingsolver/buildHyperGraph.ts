@@ -1,10 +1,10 @@
-import { LayerMapper } from "../../../domain/board/LayerMapper.ts"
-import type { RoutePoint } from "../../../domain/connection/RoutePoint.ts"
+import { LayerMapper } from "../../../model/board/LayerMapper.ts"
+import type { RoutePoint } from "../../../model/connection/RoutePoint.ts"
 import type {
   CapacityMeshNode,
   CapacityMeshNodeId,
   SimpleRouteConnection,
-} from "../../../domain/index.ts"
+} from "../../../model/index.ts"
 import type { SegmentPortPoint } from "../../AvailableSegmentPointSolver.ts"
 
 const REGION_EPSILON = 1e-6

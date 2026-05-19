@@ -4,7 +4,7 @@ import {
   RoutePoint,
   SimpleRouteConnection,
   type SimpleRouteJson,
-} from "../domain/index.ts"
+} from "../model/index.ts"
 import type {
   ConnectionPoint,
   PointId,

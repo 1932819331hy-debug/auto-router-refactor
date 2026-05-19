@@ -3,7 +3,7 @@ import {
   type RectDiffPipelineInput,
 } from "@tscircuit/rectdiff"
 
-import type { SimpleRouteJson } from "../domain/index.ts"
+import type { SimpleRouteJson } from "../model/index.ts"
 
 /**
  * Wrapper-first constructor shape for the rectdiff node pipeline.

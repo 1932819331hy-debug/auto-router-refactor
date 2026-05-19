@@ -1,5 +1,5 @@
 import type { CapacityMeshNodeInput } from "../types/index.ts"
-import type { CapacityMeshNode } from "../domain/index.ts"
+import type { CapacityMeshNode } from "../model/index.ts"
 import { CapacityMeshEdgeSolver } from "./CapacityMeshEdgeSolver.ts"
 
 /**

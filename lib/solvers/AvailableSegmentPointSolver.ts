@@ -1,6 +1,6 @@
 import { BaseSolver } from "@tscircuit/solver-utils"
 import type { GraphicsObject } from "graphics-debug"
-import type { CapacityMeshNode, CapacityMeshNodeId } from "../domain/index.ts"
+import type { CapacityMeshNode, CapacityMeshNodeId } from "../model/index.ts"
 import type { CapacityMeshEdge } from "../types/index.ts"
 
 export interface SegmentPortPoint {
