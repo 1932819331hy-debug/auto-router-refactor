@@ -120,16 +120,18 @@ export class NodeDimensionSubdivisionSolver extends BaseSolver {
 
     for (let row = 0; row < rows; row += 1) {
       for (let col = 0; col < cols; col += 1) {
-        childNodes.push(node.clone({
-          capacityMeshNodeId: `${node.capacityMeshNodeId}__sub_${row}_${col}`,
-          center: {
-            x: minX + childWidth * (col + 0.5),
-            y: minY + childHeight * (row + 0.5),
-          },
-          width: childWidth,
-          height: childHeight,
-          availableZ: node.availableZ,
-        }))
+        childNodes.push(
+          node.clone({
+            capacityMeshNodeId: `${node.capacityMeshNodeId}__sub_${row}_${col}`,
+            center: {
+              x: minX + childWidth * (col + 0.5),
+              y: minY + childHeight * (row + 0.5),
+            },
+            width: childWidth,
+            height: childHeight,
+            availableZ: node.availableZ,
+          }),
+        )
       }
     }
 

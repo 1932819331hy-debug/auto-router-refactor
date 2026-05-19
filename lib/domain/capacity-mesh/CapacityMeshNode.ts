@@ -1,4 +1,4 @@
-import type { CapacityMeshNodeId } from "../../types";
+import type { CapacityMeshNodeId } from "../../types"
 
 /**
  * Numeric tolerance used by geometry comparisons on capacity mesh nodes.
@@ -29,11 +29,12 @@ export interface SerializableCapacityMeshNodeParams {
 
 export type CapacityMeshNodeParams = SerializableCapacityMeshNodeParams
 
-
 /**
  * Accepted node input shape at API boundaries during class migration.
  */
-export type CapacityMeshNodeInput = CapacityMeshNode | SerializableCapacityMeshNodeParams
+export type CapacityMeshNodeInput =
+  | CapacityMeshNode
+  | SerializableCapacityMeshNodeParams
 
 /**
  * A rectangular free-space region produced by rectdiff and consumed by later
