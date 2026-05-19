@@ -16,11 +16,13 @@ import { EscapeViaLocationSolver } from "../solvers/EscapeViaLocationSolver.ts"
 import { MultiTargetNecessaryCrampedPortPointSolver } from "../solvers/NecessaryCrampedPortPointSolver/MultiTargetNecessaryCrampedPortPointSolver.ts"
 import { NetToPointPairsSolver2_OffBoardConnection } from "../solvers/NetToPointPairsSolver2_OffBoardConnection.ts"
 import { NodeDimensionSubdivisionSolver } from "../solvers/NodeDimensionSubdivisionSolver.ts"
+import { buildHyperGraph } from "../solvers/PortPointPathingSolver/hgportpointpathingsolver/index.ts"
+import { TinyHypergraphPortPointPathingSolver } from "../solvers/PortPointPathingSolver/tinyhypergraph/TinyHypergraphPortPointPathingSolver.ts"
 import { PreprocessSimpleRouteJsonSolver } from "../solvers/PreprocessSimpleRouteJsonSolver.ts"
 import { RectDiffNodeSolver } from "../solvers/RectDiffNodeSolver.ts"
-import {
-  type CapacityMeshEdge,
-  type SerializedSimpleRouteJson,
+import type {
+  CapacityMeshEdge,
+  SerializedSimpleRouteJson,
 } from "../types/index.ts"
 
 const DEFAULT_MAX_NODE_DIMENSION = 16
@@ -48,6 +50,7 @@ export class Pipeline1 extends BasePipelineSolver<SerializedSimpleRouteJson> {
   public edgeSolver?: CapacityMeshEdgeSolver2_NodeTreeOptimization
   public availableSegmentPointSolver?: AvailableSegmentPointSolver
   public necessaryCrampedPortPointSolver?: MultiTargetNecessaryCrampedPortPointSolver
+  public portPointPathingSolver?: TinyHypergraphPortPointPathingSolver
 
   public pipelineDef: PipelineStep<BaseSolver>[] = [
     definePipelineStep(
@@ -195,6 +198,32 @@ export class Pipeline1 extends BasePipelineSolver<SerializedSimpleRouteJson> {
           numberOfCrampedPortPointsToKeep: 5,
         },
       ],
+    ),
+    definePipelineStep(
+      "portPointPathingSolver",
+      TinyHypergraphPortPointPathingSolver,
+      (pipeline: Pipeline1) => {
+        const sharedEdgeSegments =
+          pipeline.necessaryCrampedPortPointSolver?.getOutput() ??
+          pipeline.availableSegmentPointSolver!.getOutput()
+        const { graph, connections } = buildHyperGraph({
+          capacityMeshNodes: pipeline.capacityNodes,
+          layerCount: pipeline.simpleRouteJson.layerCount,
+          segmentPortPoints: sharedEdgeSegments.flatMap(
+            (segment) => segment.portPoints,
+          ),
+          simpleRouteJsonConnections: (
+            pipeline.simpleRouteJsonWithPointPairs ?? pipeline.simpleRouteJson
+          ).connections,
+        })
+
+        return [
+          {
+            graph,
+            connections,
+          },
+        ]
+      },
     ),
   ]
 
