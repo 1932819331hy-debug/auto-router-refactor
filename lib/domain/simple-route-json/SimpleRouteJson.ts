@@ -108,7 +108,7 @@ const validateObstacle = (
   obstacle: SerializedObstacle,
   mapper: LayerMapper,
 ): void => {
-  if (obstacle.type !== "rect") {
+  if (obstacle.type !== "rect" && obstacle.type !== "oval") {
     throw new Error(`Unsupported obstacle type "${obstacle.type}"`)
   }
   if (
@@ -154,6 +154,9 @@ const normalizeJson = (
 ): SerializedSimpleRouteJson => {
   const padDiameter = normalizeViaPadDiameter(json)
   const holeDiameter = normalizeViaHoleDiameter(json, padDiameter)
+  const normalizedConnections = cloneValue(json.connections).filter(
+    (connection) => connection.pointsToConnect.length > 0,
+  )
 
   return {
     layerCount: json.layerCount,
@@ -164,7 +167,7 @@ const normalizeJson = (
     defaultObstacleMargin: json.defaultObstacleMargin,
     minTraceToPadEdgeClearance: json.minTraceToPadEdgeClearance,
     obstacles: cloneValue(json.obstacles),
-    connections: cloneValue(json.connections),
+    connections: normalizedConnections,
     bounds: cloneValue(json.bounds),
     outline: json.outline ? cloneValue(json.outline) : undefined,
     traces: json.traces ? cloneValue(json.traces) : undefined,

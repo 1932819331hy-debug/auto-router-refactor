@@ -8,6 +8,27 @@ export class Obstacle {
   public constructor(private readonly obstacle: SerializedObstacle) {}
 
   /**
+   * Rotates a world-space point into obstacle-local coordinates.
+   *
+   * @param x - Point x-coordinate.
+   * @param y - Point y-coordinate.
+   * @returns Point coordinates in the obstacle's local frame.
+   */
+  private toLocalPoint(x: number, y: number): { x: number; y: number } {
+    const rotationRadians =
+      -((this.obstacle.ccwRotationDegrees ?? 0) * Math.PI) / 180
+    const relativeX = x - this.obstacle.center.x
+    const relativeY = y - this.obstacle.center.y
+    const cosTheta = Math.cos(rotationRadians)
+    const sinTheta = Math.sin(rotationRadians)
+
+    return {
+      x: relativeX * cosTheta - relativeY * sinTheta,
+      y: relativeX * sinTheta + relativeY * cosTheta,
+    }
+  }
+
+  /**
    * Creates a wrapper around serialized obstacle data.
    *
    * @param obstacle - Serialized obstacle.
@@ -49,6 +70,15 @@ export class Obstacle {
    * @returns Bounds enclosing the obstacle geometry.
    */
   public getBounds(): RouteBounds {
+    if (this.obstacle.type === "oval") {
+      return RouteBounds.fromCenteredOval(
+        this.obstacle.center,
+        this.obstacle.width,
+        this.obstacle.height,
+        this.obstacle.ccwRotationDegrees ?? 0,
+      )
+    }
+
     return RouteBounds.fromCenteredRect(
       this.obstacle.center,
       this.obstacle.width,
@@ -58,25 +88,35 @@ export class Obstacle {
   }
 
   /**
-   * Checks whether a point lies inside the obstacle rectangle.
+   * Checks whether a point lies inside the obstacle geometry.
    *
    * @param x - Point x-coordinate.
    * @param y - Point y-coordinate.
    * @returns True when the point lies inside or on the boundary.
    */
   public containsPoint(x: number, y: number): boolean {
-    const rotationRadians =
-      -((this.obstacle.ccwRotationDegrees ?? 0) * Math.PI) / 180
-    const relativeX = x - this.obstacle.center.x
-    const relativeY = y - this.obstacle.center.y
-    const cosTheta = Math.cos(rotationRadians)
-    const sinTheta = Math.sin(rotationRadians)
-    const localX = relativeX * cosTheta - relativeY * sinTheta
-    const localY = relativeX * sinTheta + relativeY * cosTheta
+    const localPoint = this.toLocalPoint(x, y)
+
+    if (this.obstacle.type === "oval") {
+      const radiusX = this.obstacle.width / 2
+      const radiusY = this.obstacle.height / 2
+
+      if (radiusX === 0 || radiusY === 0) {
+        return (
+          Math.abs(localPoint.x) <= radiusX && Math.abs(localPoint.y) <= radiusY
+        )
+      }
+
+      return (
+        (localPoint.x * localPoint.x) / (radiusX * radiusX) +
+          (localPoint.y * localPoint.y) / (radiusY * radiusY) <=
+        1
+      )
+    }
 
     return (
-      Math.abs(localX) <= this.obstacle.width / 2 &&
-      Math.abs(localY) <= this.obstacle.height / 2
+      Math.abs(localPoint.x) <= this.obstacle.width / 2 &&
+      Math.abs(localPoint.y) <= this.obstacle.height / 2
     )
   }
 

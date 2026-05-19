@@ -55,7 +55,7 @@ export interface SerializedObstacle {
   obstacleId?: string
   /** Optional source component identifier associated with this obstacle. */
   componentId?: string
-  type: "rect"
+  type: "rect" | "oval"
   layers: string[]
   zLayers?: number[]
   center: { x: number; y: number }

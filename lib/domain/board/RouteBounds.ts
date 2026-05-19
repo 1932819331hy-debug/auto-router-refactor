@@ -67,6 +67,43 @@ export class RouteBounds {
   }
 
   /**
+   * Creates axis-aligned bounds for a centered oval, including rotation.
+   *
+   * @param center - Oval center.
+   * @param width - Oval width.
+   * @param height - Oval height.
+   * @param ccwRotationDegrees - Optional counter-clockwise rotation.
+   * @returns Axis-aligned bounds enclosing the oval.
+   */
+  public static fromCenteredOval(
+    center: { x: number; y: number },
+    width: number,
+    height: number,
+    ccwRotationDegrees = 0,
+  ): RouteBounds {
+    const radiusX = width / 2
+    const radiusY = height / 2
+    const rotationRadians = (ccwRotationDegrees * Math.PI) / 180
+    const cosTheta = Math.cos(rotationRadians)
+    const sinTheta = Math.sin(rotationRadians)
+    const xExtent = Math.sqrt(
+      radiusX * radiusX * cosTheta * cosTheta +
+        radiusY * radiusY * sinTheta * sinTheta,
+    )
+    const yExtent = Math.sqrt(
+      radiusX * radiusX * sinTheta * sinTheta +
+        radiusY * radiusY * cosTheta * cosTheta,
+    )
+
+    return new RouteBounds(
+      center.x - xExtent,
+      center.x + xExtent,
+      center.y - yExtent,
+      center.y + yExtent,
+    )
+  }
+
+  /**
    * Expands this bounds object to include another bounds object.
    *
    * @param other - Bounds to merge in.
