@@ -75,9 +75,6 @@ class DisjointSetUnion {
   }
 }
 
-const getPointKey = (point: ConnectionPoint): PointKey =>
-  RoutePoint.fromJson(point).getKey()
-
 const getPointDistance = (
   leftPoint: Pick<ConnectionPoint, "x" | "y">,
   rightPoint: Pick<ConnectionPoint, "x" | "y">,
@@ -119,12 +116,17 @@ const buildMinimumSpanningTree = <TPoint extends ConnectionPoint>(
   allEdges.sort((leftEdge, rightEdge) => leftEdge.weight - rightEdge.weight)
 
   const pointSet = new DisjointSetUnion(
-    points.map((point) => getPointKey(point)),
+    points.map((point) => RoutePoint.getKeyFromJson(point)),
   )
   const minimumSpanningTree: Array<WeightedEdge<TPoint>> = []
 
   for (const edge of allEdges) {
-    if (pointSet.union(getPointKey(edge.from), getPointKey(edge.to))) {
+    if (
+      pointSet.union(
+        RoutePoint.getKeyFromJson(edge.from),
+        RoutePoint.getKeyFromJson(edge.to),
+      )
+    ) {
       minimumSpanningTree.push(edge)
     }
     if (minimumSpanningTree.length === points.length - 1) {
@@ -153,7 +155,7 @@ const mergeConnections = (
     }
 
     for (const point of connection.pointsToConnect) {
-      const pointKey = getPointKey(point)
+      const pointKey = RoutePoint.getKeyFromJson(point)
       const existingIds = pointKeyToConnectionIds.get(pointKey) ?? []
       existingIds.push(connectionId)
       pointKeyToConnectionIds.set(pointKey, existingIds)
@@ -210,7 +212,7 @@ const mergeConnections = (
 
     for (const connection of connectionGroup) {
       for (const point of connection.pointsToConnect) {
-        pointByKey.set(getPointKey(point), point)
+        pointByKey.set(RoutePoint.getKeyFromJson(point), point)
       }
 
       mergedNames.add(connection.name)

@@ -1,7 +1,12 @@
 import { BaseSolver } from "@tscircuit/solver-utils"
 import type { GraphicsObject } from "graphics-debug"
-import type { CapacityMeshNode, CapacityMeshNodeId } from "../model/index.ts"
-import type { CapacityMeshEdge } from "../types/index.ts"
+import {
+  CapacityMesh,
+  CapacityMeshEdge as CapacityMeshEdgeModel,
+  type CapacityMeshNode,
+  type CapacityMeshNodeId,
+} from "../model/index.ts"
+import type { CapacityMeshEdge as CapacityMeshEdgeData } from "../types/index.ts"
 
 export interface SegmentPortPoint {
   segmentPortPointId: string
@@ -30,17 +35,18 @@ export interface SharedEdgeSegment {
  */
 export class AvailableSegmentPointSolver extends BaseSolver {
   public readonly nodes: CapacityMeshNode[]
-  public readonly edges: CapacityMeshEdge[]
+  public readonly edges: CapacityMeshEdgeData[]
   public readonly traceWidth: number
   public readonly obstacleMargin: number
   public readonly minPortSpacing: number
   public readonly nodeMap: Map<CapacityMeshNodeId, CapacityMeshNode>
-  public readonly nodeEdgeMap: Map<CapacityMeshNodeId, CapacityMeshEdge[]>
+  public readonly nodeEdgeMap: Map<CapacityMeshNodeId, CapacityMeshEdgeData[]>
   public readonly colorMap: Record<string, string>
   public readonly shouldReturnCrampedPortPoints: boolean
   public readonly sharedEdgeSegments: SharedEdgeSegment[] = []
   public readonly edgeSegmentMap = new Map<string, SharedEdgeSegment>()
   public readonly portPointMap = new Map<string, SegmentPortPoint>()
+  private readonly capacityMesh: CapacityMesh
 
   public constructor({
     nodes,
@@ -51,7 +57,7 @@ export class AvailableSegmentPointSolver extends BaseSolver {
     shouldReturnCrampedPortPoints,
   }: {
     nodes: CapacityMeshNode[]
-    edges: CapacityMeshEdge[]
+    edges: CapacityMeshEdgeData[]
     traceWidth: number
     obstacleMargin?: number
     colorMap?: Record<string, string>
@@ -65,6 +71,7 @@ export class AvailableSegmentPointSolver extends BaseSolver {
     this.shouldReturnCrampedPortPoints = shouldReturnCrampedPortPoints
     this.minPortSpacing = this.traceWidth + this.obstacleMargin
     this.colorMap = colorMap ?? {}
+    this.capacityMesh = CapacityMesh.from({ nodes, edges })
     this.nodeMap = new Map(nodes.map((node) => [node.capacityMeshNodeId, node]))
     this.nodeEdgeMap = this.createNodeEdgeMap(edges)
     this.MAX_ITERATIONS = 1
@@ -92,17 +99,12 @@ export class AvailableSegmentPointSolver extends BaseSolver {
     nodeId1: CapacityMeshNodeId,
     nodeId2: CapacityMeshNodeId,
   ): SegmentPortPoint[] {
-    const edge = this.edges.find(
-      (candidate) =>
-        (candidate.nodeIds[0] === nodeId1 &&
-          candidate.nodeIds[1] === nodeId2) ||
-        (candidate.nodeIds[0] === nodeId2 && candidate.nodeIds[1] === nodeId1),
-    )
+    const edge = this.capacityMesh.findEdgeBetween(nodeId1, nodeId2)
     if (!edge) {
       return []
     }
 
-    const segment = this.edgeSegmentMap.get(edge.capacityMeshEdgeId)
+    const segment = this.edgeSegmentMap.get(edge.id)
     if (!segment) {
       return []
     }
@@ -116,17 +118,12 @@ export class AvailableSegmentPointSolver extends BaseSolver {
     nodeId1: CapacityMeshNodeId,
     nodeId2: CapacityMeshNodeId,
   ): SegmentPortPoint[] {
-    const edge = this.edges.find(
-      (candidate) =>
-        (candidate.nodeIds[0] === nodeId1 &&
-          candidate.nodeIds[1] === nodeId2) ||
-        (candidate.nodeIds[0] === nodeId2 && candidate.nodeIds[1] === nodeId1),
-    )
+    const edge = this.capacityMesh.findEdgeBetween(nodeId1, nodeId2)
     if (!edge) {
       return []
     }
 
-    return this.edgeSegmentMap.get(edge.capacityMeshEdgeId)?.portPoints ?? []
+    return this.edgeSegmentMap.get(edge.id)?.portPoints ?? []
   }
 
   public assignPortPoint(
@@ -242,14 +239,15 @@ export class AvailableSegmentPointSolver extends BaseSolver {
    * @returns Incident edge list per node id.
    */
   private createNodeEdgeMap(
-    edges: ReadonlyArray<CapacityMeshEdge>,
-  ): Map<CapacityMeshNodeId, CapacityMeshEdge[]> {
-    const nodeEdgeMap = new Map<CapacityMeshNodeId, CapacityMeshEdge[]>()
+    edges: ReadonlyArray<CapacityMeshEdgeData>,
+  ): Map<CapacityMeshNodeId, CapacityMeshEdgeData[]> {
+    const nodeEdgeMap = new Map<CapacityMeshNodeId, CapacityMeshEdgeData[]>()
 
-    for (const edge of edges) {
+    for (const edgeJson of edges) {
+      const edge = CapacityMeshEdgeModel.fromJson(edgeJson)
       for (const nodeId of edge.nodeIds) {
         const existingEdges = nodeEdgeMap.get(nodeId) ?? []
-        existingEdges.push(edge)
+        existingEdges.push(edge.toJson())
         nodeEdgeMap.set(nodeId, existingEdges)
       }
     }
@@ -258,7 +256,7 @@ export class AvailableSegmentPointSolver extends BaseSolver {
   }
 
   private computeSharedEdgeSegment(
-    edge: CapacityMeshEdge,
+    edge: CapacityMeshEdgeData,
     node1: CapacityMeshNode,
     node2: CapacityMeshNode,
   ): SharedEdgeSegment | null {

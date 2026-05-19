@@ -1,17 +1,18 @@
 import { BaseSolver } from "@tscircuit/solver-utils"
 
-import { LayerMapper, Obstacle, type SimpleRouteJson } from "../model/index.ts"
+import {
+  LayerMapper,
+  Obstacle,
+  RoutedTrace,
+  type SimpleRouteJson,
+} from "../model/index.ts"
 import type {
   SerializedObstacle,
   SerializedSimpleRouteJson,
-  SimplifiedPcbTrace,
+  SimplifiedPcbViaRouteStep,
 } from "../types/index.ts"
 
 const MIN_OBSTACLE_DIMENSION = 0.001
-
-type RouteStep = SimplifiedPcbTrace["route"][number]
-type WireRouteStep = Extract<RouteStep, { route_type: "wire" }>
-type ViaRouteStep = Extract<RouteStep, { route_type: "via" }>
 /**
  * Preprocesses route JSON before later routing stages consume it.
  *
@@ -111,7 +112,11 @@ class TraceObstacleProjector {
   public project(): SerializedObstacle[] {
     const obstacles: SerializedObstacle[] = []
 
-    for (const [traceIndex, trace] of this.simpleRouteJson.traces.entries()) {
+    for (const [
+      traceIndex,
+      traceJson,
+    ] of this.simpleRouteJson.traces.entries()) {
+      const trace = RoutedTrace.fromJson(traceJson)
       obstacles.push(...this.projectTraceVias(trace, traceIndex))
       obstacles.push(...this.projectTraceSegments(trace, traceIndex))
     }
@@ -120,24 +125,26 @@ class TraceObstacleProjector {
   }
 
   private projectTraceVias(
-    trace: SimplifiedPcbTrace,
+    trace: RoutedTrace,
     traceIndex: number,
   ): SerializedObstacle[] {
     const obstacles: SerializedObstacle[] = []
 
-    for (const [stepIndex, step] of trace.route.entries()) {
-      if (step.route_type === "via") {
+    for (const [stepIndex, routedStep] of trace.steps.entries()) {
+      const viaStep = routedStep.asVia()
+      if (viaStep) {
         obstacles.push(
           this.createViaObstacle({
             trace,
             traceIndex,
             stepIndex,
-            step,
+            step: viaStep,
           }),
         )
       }
 
-      if (step.route_type === "through_obstacle") {
+      const throughObstacleStep = routedStep.asThroughObstacle()
+      if (throughObstacleStep) {
         const obstacle = this.createSegmentObstacle({
           obstacleId: this.getObstacleId(
             trace,
@@ -145,10 +152,13 @@ class TraceObstacleProjector {
             stepIndex,
             "through",
           ),
-          start: step.start,
-          end: step.end,
-          width: step.width,
-          layers: this.getLayerSpan(step.from_layer, step.to_layer),
+          start: throughObstacleStep.start,
+          end: throughObstacleStep.end,
+          width: throughObstacleStep.width,
+          layers: this.getLayerSpan(
+            throughObstacleStep.from_layer,
+            throughObstacleStep.to_layer,
+          ),
         })
         if (obstacle) {
           obstacles.push(obstacle)
@@ -160,19 +170,16 @@ class TraceObstacleProjector {
   }
 
   private projectTraceSegments(
-    trace: SimplifiedPcbTrace,
+    trace: RoutedTrace,
     traceIndex: number,
   ): SerializedObstacle[] {
     const obstacles: SerializedObstacle[] = []
+    const steps = trace.steps
 
-    for (
-      let stepIndex = 0;
-      stepIndex < trace.route.length - 1;
-      stepIndex += 1
-    ) {
-      const currentStep = trace.route[stepIndex]
-      const nextStep = trace.route[stepIndex + 1]
-      if (!this.isWireStep(currentStep) || !this.isWireStep(nextStep)) {
+    for (let stepIndex = 0; stepIndex < steps.length - 1; stepIndex += 1) {
+      const currentStep = steps[stepIndex]?.asWire()
+      const nextStep = steps[stepIndex + 1]?.asWire()
+      if (!currentStep || !nextStep) {
         continue
       }
       if (currentStep.layer !== nextStep.layer) {
@@ -195,10 +202,10 @@ class TraceObstacleProjector {
   }
 
   private createViaObstacle(params: {
-    trace: SimplifiedPcbTrace
+    trace: RoutedTrace
     traceIndex: number
     stepIndex: number
-    step: ViaRouteStep
+    step: SimplifiedPcbViaRouteStep
   }): SerializedObstacle {
     const { trace, traceIndex, stepIndex, step } = params
     const viaDiameter = step.via_diameter ?? this.viaDiameter
@@ -259,15 +266,11 @@ class TraceObstacleProjector {
   }
 
   private getObstacleId(
-    trace: SimplifiedPcbTrace,
+    trace: RoutedTrace,
     traceIndex: number,
     stepIndex: number,
     suffix: string,
   ): string {
-    return `trace_obstacle_${trace.pcb_trace_id}_${traceIndex}_${stepIndex}_${suffix}`
-  }
-
-  private isWireStep(step: RouteStep | undefined): step is WireRouteStep {
-    return step?.route_type === "wire"
+    return `trace_obstacle_${trace.id}_${traceIndex}_${stepIndex}_${suffix}`
   }
 }

@@ -1,3 +1,4 @@
+import { LineSegment2, Point2 } from "../../math/index.ts"
 import type { SerializedObstacle } from "../../types/index.ts"
 import { RouteBounds } from "../board/RouteBounds.ts"
 
@@ -140,5 +141,74 @@ export class Obstacle {
    */
   public getLayerNames(): readonly string[] {
     return [...this.obstacle.layers]
+  }
+
+  /**
+   * Builds a stable obstacle key for indexing and grouping.
+   *
+   * This prefers the serialized `obstacleId`. When no id exists it falls back
+   * to geometry rounded to 4 decimals, matching the legacy solver behavior.
+   *
+   * @returns Stable obstacle key string.
+   */
+  public getKey(): string {
+    return (
+      this.obstacle.obstacleId ??
+      [
+        this.obstacle.layers.join("."),
+        this.obstacle.center.x.toFixed(4),
+        this.obstacle.center.y.toFixed(4),
+        this.obstacle.width.toFixed(4),
+        this.obstacle.height.toFixed(4),
+      ].join(":")
+    )
+  }
+
+  /**
+   * Checks whether a point lies inside the obstacle geometry.
+   *
+   * @param point - Point-like object in world coordinates.
+   * @returns True when the point lies inside or on the boundary.
+   */
+  public containsPointObject(point: { x: number; y: number }): boolean {
+    return this.containsPoint(point.x, point.y)
+  }
+
+  /**
+   * Returns axis-aligned boundary segments for the obstacle bounds.
+   *
+   * This intentionally follows the solver's bounds-based collision strategy
+   * rather than tracing the exact rotated perimeter.
+   *
+   * @returns Four segments describing the obstacle bounds.
+   */
+  public getBoundarySegments(): LineSegment2[] {
+    const bounds = this.getBounds()
+    const topLeft = new Point2(bounds.minX, bounds.minY)
+    const topRight = new Point2(bounds.maxX, bounds.minY)
+    const bottomRight = new Point2(bounds.maxX, bounds.maxY)
+    const bottomLeft = new Point2(bounds.minX, bounds.maxY)
+
+    return [
+      new LineSegment2(topLeft, topRight),
+      new LineSegment2(topRight, bottomRight),
+      new LineSegment2(bottomRight, bottomLeft),
+      new LineSegment2(bottomLeft, topLeft),
+    ]
+  }
+
+  /**
+   * Returns the shortest distance from a point to this obstacle's bounds.
+   *
+   * A zero result means the point lies inside the bounds or on the boundary.
+   *
+   * @param point - Point to measure from.
+   * @returns Euclidean distance to the axis-aligned obstacle bounds.
+   */
+  public getPointToBoundsDistance(point: { x: number; y: number }): number {
+    const bounds = this.getBounds()
+    const dx = Math.max(bounds.minX - point.x, 0, point.x - bounds.maxX)
+    const dy = Math.max(bounds.minY - point.y, 0, point.y - bounds.maxY)
+    return Math.hypot(dx, dy)
   }
 }

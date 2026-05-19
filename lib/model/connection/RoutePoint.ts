@@ -35,6 +35,40 @@ export class RoutePoint {
   }
 
   /**
+   * Checks whether a serialized point uses the single-layer transport shape.
+   *
+   * @param point - Serialized connection point.
+   * @returns True when the point has a single `layer`.
+   */
+  public static isSingleLayer(
+    point: ConnectionPoint,
+  ): point is SingleLayerConnectionPoint {
+    return isSingleLayerPoint(point)
+  }
+
+  /**
+   * Checks whether a serialized point uses the multi-layer transport shape.
+   *
+   * @param point - Serialized connection point.
+   * @returns True when the point has a `layers` array.
+   */
+  public static isMultiLayer(
+    point: ConnectionPoint,
+  ): point is MultiLayerConnectionPoint {
+    return isMultiLayerPoint(point)
+  }
+
+  /**
+   * Builds a stable point key directly from serialized point data.
+   *
+   * @param point - Serialized connection point.
+   * @returns Stable point key string.
+   */
+  public static getKeyFromJson(point: ConnectionPoint): PointKey {
+    return RoutePoint.fromJson(point).getKey()
+  }
+
+  /**
    * Returns the original serialized point.
    *
    * @returns The unchanged point payload.
@@ -69,7 +103,7 @@ export class RoutePoint {
    *
    * @returns True when the point has a single `layer`.
    */
-  public isSingleLayer(): boolean {
+  public isSingleLayer(): this is { point: SingleLayerConnectionPoint } {
     return isSingleLayerPoint(this.point)
   }
 
@@ -78,7 +112,7 @@ export class RoutePoint {
    *
    * @returns True when the point has a `layers` array.
    */
-  public isMultiLayer(): boolean {
+  public isMultiLayer(): this is { point: MultiLayerConnectionPoint } {
     return isMultiLayerPoint(this.point)
   }
 

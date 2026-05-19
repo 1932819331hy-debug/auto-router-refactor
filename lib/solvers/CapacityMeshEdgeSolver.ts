@@ -1,7 +1,13 @@
 import { BaseSolver } from "@tscircuit/solver-utils"
 
-import { CapacityMeshNode } from "../model/index.ts"
-import type { CapacityMeshEdge, CapacityMeshNodeInput } from "../types/index.ts"
+import {
+  CapacityMeshEdge as CapacityMeshEdgeModel,
+  CapacityMeshNode,
+} from "../model/index.ts"
+import type {
+  CapacityMeshEdge as CapacityMeshEdgeData,
+  CapacityMeshNodeInput,
+} from "../types/index.ts"
 
 /**
  * Builds adjacency edges between capacity mesh nodes that share a border and at
@@ -9,7 +15,7 @@ import type { CapacityMeshEdge, CapacityMeshNodeInput } from "../types/index.ts"
  */
 export class CapacityMeshEdgeSolver extends BaseSolver {
   public readonly nodes: CapacityMeshNode[]
-  public edges: CapacityMeshEdge[]
+  public edges: CapacityMeshEdgeData[]
 
   public constructor(nodes: CapacityMeshNodeInput[]) {
     super()
@@ -49,10 +55,12 @@ export class CapacityMeshEdgeSolver extends BaseSolver {
           continue
         }
 
-        this.edges.push({
-          capacityMeshEdgeId: this.getNextCapacityMeshEdgeId(),
-          nodeIds: [nodeA.capacityMeshNodeId, nodeB.capacityMeshNodeId],
-        })
+        this.edges.push(
+          CapacityMeshEdgeModel.between({
+            capacityMeshEdgeId: this.getNextCapacityMeshEdgeId(),
+            nodeIds: [nodeA.capacityMeshNodeId, nodeB.capacityMeshNodeId],
+          }).toJson(),
+        )
       }
     }
 
@@ -65,7 +73,7 @@ export class CapacityMeshEdgeSolver extends BaseSolver {
    *
    * @returns Mesh adjacency edges.
    */
-  public override getOutput(): CapacityMeshEdge[] {
+  public override getOutput(): CapacityMeshEdgeData[] {
     return this.edges
   }
 
@@ -131,16 +139,20 @@ export class CapacityMeshEdgeSolver extends BaseSolver {
           continue
         }
 
-        this.edges.push({
-          capacityMeshEdgeId: this.getNextCapacityMeshEdgeId(),
-          nodeIds: [nodeA.capacityMeshNodeId, nodeB.capacityMeshNodeId],
-        })
+        this.edges.push(
+          CapacityMeshEdgeModel.between({
+            capacityMeshEdgeId: this.getNextCapacityMeshEdgeId(),
+            nodeIds: [nodeA.capacityMeshNodeId, nodeB.capacityMeshNodeId],
+          }).toJson(),
+        )
       }
     }
 
     for (const targetNode of targetNodes) {
       const hasEdge = this.edges.some((edge) =>
-        edge.nodeIds.includes(targetNode.capacityMeshNodeId),
+        CapacityMeshEdgeModel.fromJson(edge).includesNodeId(
+          targetNode.capacityMeshNodeId,
+        ),
       )
       if (hasEdge) {
         continue
@@ -161,13 +173,15 @@ export class CapacityMeshEdgeSolver extends BaseSolver {
       }
 
       if (nearestNode) {
-        this.edges.push({
-          capacityMeshEdgeId: this.getNextCapacityMeshEdgeId(),
-          nodeIds: [
-            targetNode.capacityMeshNodeId,
-            nearestNode.capacityMeshNodeId,
-          ],
-        })
+        this.edges.push(
+          CapacityMeshEdgeModel.between({
+            capacityMeshEdgeId: this.getNextCapacityMeshEdgeId(),
+            nodeIds: [
+              targetNode.capacityMeshNodeId,
+              nearestNode.capacityMeshNodeId,
+            ],
+          }).toJson(),
+        )
       }
     }
   }
@@ -176,10 +190,11 @@ export class CapacityMeshEdgeSolver extends BaseSolver {
     node1: CapacityMeshNode,
     node2: CapacityMeshNode,
   ): boolean {
-    return this.edges.some(
-      (edge) =>
-        edge.nodeIds.includes(node1.capacityMeshNodeId) &&
-        edge.nodeIds.includes(node2.capacityMeshNodeId),
+    return this.edges.some((edge) =>
+      CapacityMeshEdgeModel.fromJson(edge).connectsNodes(
+        node1.capacityMeshNodeId,
+        node2.capacityMeshNodeId,
+      ),
     )
   }
 }

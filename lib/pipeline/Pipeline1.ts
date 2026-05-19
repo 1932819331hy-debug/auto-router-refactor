@@ -12,7 +12,7 @@ import {
 } from "../model/index.ts"
 import { AvailableSegmentPointSolver } from "../solvers/AvailableSegmentPointSolver.ts"
 import { CapacityMeshEdgeSolver2_NodeTreeOptimization } from "../solvers/CapacityMeshEdgeSolver2_NodeTreeOptimization.ts"
-import { EscapeViaLocationSolver } from "../solvers/EscapeViaLocationSolver.ts"
+import { EscapeViaLocationSolver } from "../solvers/EscapeViaLocationSolver/EscapeViaLocationSolver.ts"
 import { MultiTargetNecessaryCrampedPortPointSolver } from "../solvers/NecessaryCrampedPortPointSolver/MultiTargetNecessaryCrampedPortPointSolver.ts"
 import { NetToPointPairsSolver2_OffBoardConnection } from "../solvers/NetToPointPairsSolver2_OffBoardConnection.ts"
 import { NodeDimensionSubdivisionSolver } from "../solvers/NodeDimensionSubdivisionSolver.ts"
