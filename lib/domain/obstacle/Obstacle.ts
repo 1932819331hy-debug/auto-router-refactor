@@ -1,11 +1,11 @@
-import type { Obstacle } from "../../types/index.ts"
+import type { SerializedObstacle } from "../../types/index.ts"
 import { RouteBounds } from "../board/RouteBounds.ts"
 
 /**
- * Domain wrapper for a serialized board obstacle.
+ * Domain wrapper for a serialized obstacle.
  */
-export class BoardObstacle {
-  public constructor(private readonly obstacle: Obstacle) {}
+export class Obstacle {
+  public constructor(private readonly obstacle: SerializedObstacle) {}
 
   /**
    * Creates a wrapper around serialized obstacle data.
@@ -13,8 +13,8 @@ export class BoardObstacle {
    * @param obstacle - Serialized obstacle.
    * @returns A wrapper with unchanged obstacle data.
    */
-  public static fromJson(obstacle: Obstacle): BoardObstacle {
-    return new BoardObstacle(obstacle)
+  public static fromJson(obstacle: SerializedObstacle): Obstacle {
+    return new Obstacle(obstacle)
   }
 
   /**
@@ -22,7 +22,7 @@ export class BoardObstacle {
    *
    * @returns The unchanged obstacle payload.
    */
-  public toJson(): Obstacle {
+  public toJson(): SerializedObstacle {
     return this.obstacle
   }
 
@@ -89,7 +89,7 @@ export class BoardObstacle {
    * @param other - Obstacle to compare against.
    * @returns True when the obstacles' bounds overlap.
    */
-  public overlaps(other: BoardObstacle): boolean {
+  public overlaps(other: Obstacle): boolean {
     return this.getBounds().overlaps(other.getBounds())
   }
 

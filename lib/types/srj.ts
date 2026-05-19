@@ -51,7 +51,7 @@ export type JumperType = "1206x4" | "0603"
 /**
  * Serialized obstacle used by autorouting inputs and outputs.
  */
-export interface Obstacle {
+export interface SerializedObstacle {
   obstacleId?: string
   /** Optional source component identifier associated with this obstacle. */
   componentId?: string
@@ -78,13 +78,13 @@ export type Jumper = {
   orientation: "horizontal" | "vertical"
   width: number
   height: number
-  pads: Obstacle[]
+  pads: SerializedObstacle[]
 }
 
 /**
  * Serialized logical connection for a route document.
  */
-export interface SimpleRouteConnection {
+export interface SerializedSimpleRouteConnection {
   name: string
   rootConnectionName?: string
   mergedConnectionNames?: string[]
@@ -100,7 +100,7 @@ export interface SimpleRouteConnection {
 /**
  * Serialized route document used as the current public contract.
  */
-export interface SimpleRouteJson {
+export interface SerializedSimpleRouteJson {
   layerCount: number
   minTraceWidth: number
   nominalTraceWidth?: number
@@ -112,8 +112,8 @@ export interface SimpleRouteJson {
   min_via_pad_diameter?: number
   defaultObstacleMargin?: number
   minTraceToPadEdgeClearance?: number
-  obstacles: Obstacle[]
-  connections: Array<SimpleRouteConnection>
+  obstacles: SerializedObstacle[]
+  connections: Array<SerializedSimpleRouteConnection>
   bounds: { minX: number; maxX: number; minY: number; maxY: number }
   outline?: Array<{ x: number; y: number }>
   traces?: SimplifiedPcbTraces

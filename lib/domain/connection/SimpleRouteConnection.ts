@@ -1,11 +1,13 @@
-import type { SimpleRouteConnection } from "../../types/index.ts"
+import type { SerializedSimpleRouteConnection } from "../../types/index.ts"
 import { RoutePoint } from "./RoutePoint.ts"
 
 /**
  * Domain wrapper for a serialized logical connection.
  */
-export class RouteConnection {
-  public constructor(private readonly connection: SimpleRouteConnection) {}
+export class SimpleRouteConnection {
+  public constructor(
+    private readonly connection: SerializedSimpleRouteConnection,
+  ) {}
 
   /**
    * Creates a wrapper around serialized connection data.
@@ -13,8 +15,10 @@ export class RouteConnection {
    * @param connection - Serialized route connection.
    * @returns A wrapper with unchanged connection data.
    */
-  public static fromJson(connection: SimpleRouteConnection): RouteConnection {
-    return new RouteConnection(connection)
+  public static fromJson(
+    connection: SerializedSimpleRouteConnection,
+  ): SimpleRouteConnection {
+    return new SimpleRouteConnection(connection)
   }
 
   /**
@@ -22,7 +26,7 @@ export class RouteConnection {
    *
    * @returns A cloned connection payload.
    */
-  public toJson(): SimpleRouteConnection {
+  public toJson(): SerializedSimpleRouteConnection {
     return structuredClone(this.connection)
   }
 
@@ -39,7 +43,9 @@ export class RouteConnection {
    * @returns Read-only point wrappers.
    */
   public get points(): ReadonlyArray<RoutePoint> {
-    return this.connection.pointsToConnect.map((point) => RoutePoint.fromJson(point))
+    return this.connection.pointsToConnect.map((point) =>
+      RoutePoint.fromJson(point),
+    )
   }
 
   /**

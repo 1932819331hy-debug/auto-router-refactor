@@ -1,14 +1,15 @@
 import type {
   ConnectionPoint,
   JumperType,
-  Obstacle,
-  SimpleRouteConnection,
-  SimpleRouteJson,
+  SerializedObstacle,
+  SerializedSimpleRouteConnection,
+  SerializedSimpleRouteJson,
+  SimplifiedPcbTrace,
 } from "../../types/index.ts"
 import { LayerMapper } from "../board/LayerMapper.ts"
 import { RouteBounds } from "../board/RouteBounds.ts"
-import { RouteConnection } from "../connection/RouteConnection.ts"
-import type { BoardObstacle } from "../obstacle/BoardObstacle.ts"
+import { SimpleRouteConnection } from "../connection/SimpleRouteConnection.ts"
+import type { Obstacle } from "../obstacle/Obstacle.ts"
 import { ObstacleSet } from "../obstacle/ObstacleSet.ts"
 
 const VALID_JUMPER_TYPES: ReadonlySet<JumperType> = new Set(["0603", "1206x4"])
@@ -23,7 +24,7 @@ const cloneValue = <T>(value: T): T => structuredClone(value)
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value)
 
-const normalizeViaPadDiameter = (json: SimpleRouteJson): number => {
+const normalizeViaPadDiameter = (json: SerializedSimpleRouteJson): number => {
   const requestedHoleDiameter = firstFiniteNumber(
     json.min_via_hole_diameter,
     json.minViaHoleDiameter,
@@ -41,7 +42,7 @@ const normalizeViaPadDiameter = (json: SimpleRouteJson): number => {
 }
 
 const normalizeViaHoleDiameter = (
-  json: SimpleRouteJson,
+  json: SerializedSimpleRouteJson,
   padDiameter: number,
 ): number =>
   firstFiniteNumber(json.min_via_hole_diameter, json.minViaHoleDiameter) ??
@@ -85,7 +86,7 @@ const validatePoint = (point: ConnectionPoint, mapper: LayerMapper): void => {
 }
 
 const validateConnection = (
-  connection: SimpleRouteConnection,
+  connection: SerializedSimpleRouteConnection,
   mapper: LayerMapper,
 ): void => {
   if (typeof connection.name !== "string" || connection.name.length === 0) {
@@ -93,7 +94,9 @@ const validateConnection = (
   }
 
   if (connection.pointsToConnect.length === 0) {
-    throw new Error(`Connection "${connection.name}" must contain at least one point`)
+    throw new Error(
+      `Connection "${connection.name}" must contain at least one point`,
+    )
   }
 
   for (const point of connection.pointsToConnect) {
@@ -101,11 +104,17 @@ const validateConnection = (
   }
 }
 
-const validateObstacle = (obstacle: Obstacle, mapper: LayerMapper): void => {
+const validateObstacle = (
+  obstacle: SerializedObstacle,
+  mapper: LayerMapper,
+): void => {
   if (obstacle.type !== "rect") {
     throw new Error(`Unsupported obstacle type "${obstacle.type}"`)
   }
-  if (!isFiniteNumber(obstacle.center.x) || !isFiniteNumber(obstacle.center.y)) {
+  if (
+    !isFiniteNumber(obstacle.center.x) ||
+    !isFiniteNumber(obstacle.center.y)
+  ) {
     throw new Error("Obstacles must have finite center coordinates")
   }
   if (!isFiniteNumber(obstacle.width) || obstacle.width < 0) {
@@ -124,7 +133,7 @@ const validateObstacle = (obstacle: Obstacle, mapper: LayerMapper): void => {
 }
 
 const validateBounds = (
-  bounds: SimpleRouteJson["bounds"],
+  bounds: SerializedSimpleRouteJson["bounds"],
   label: string,
 ): void => {
   if (
@@ -140,7 +149,9 @@ const validateBounds = (
   }
 }
 
-const normalizeJson = (json: SimpleRouteJson): SimpleRouteJson => {
+const normalizeJson = (
+  json: SerializedSimpleRouteJson,
+): SerializedSimpleRouteJson => {
   const padDiameter = normalizeViaPadDiameter(json)
   const holeDiameter = normalizeViaHoleDiameter(json, padDiameter)
 
@@ -163,12 +174,14 @@ const normalizeJson = (json: SimpleRouteJson): SimpleRouteJson => {
   }
 }
 
-const validateNormalizedJson = (json: SimpleRouteJson): void => {
+const validateNormalizedJson = (json: SerializedSimpleRouteJson): void => {
   if (!Number.isInteger(json.layerCount) || json.layerCount < 1) {
     throw new Error("Route input layerCount must be a positive integer")
   }
   if (!isFiniteNumber(json.minTraceWidth) || json.minTraceWidth <= 0) {
-    throw new Error("Route input minTraceWidth must be a finite positive number")
+    throw new Error(
+      "Route input minTraceWidth must be a finite positive number",
+    )
   }
   if (
     !isFiniteNumber(json.nominalTraceWidth) ||
@@ -194,7 +207,8 @@ const validateNormalizedJson = (json: SimpleRouteJson): void => {
   }
   if (
     json.defaultObstacleMargin !== undefined &&
-    (!isFiniteNumber(json.defaultObstacleMargin) || json.defaultObstacleMargin < 0)
+    (!isFiniteNumber(json.defaultObstacleMargin) ||
+      json.defaultObstacleMargin < 0)
   ) {
     throw new Error(
       "Route input defaultObstacleMargin must be a finite non-negative number",
@@ -233,16 +247,16 @@ const validateNormalizedJson = (json: SimpleRouteJson): void => {
  * This class owns SRJ-wide normalization, validation, and the document-level
  * domain wrappers built from the serialized payload.
  */
-export class RouteInput {
+export class SimpleRouteJson {
   private readonly layerMapperValue: LayerMapper
-  private readonly connectionWrappers: ReadonlyArray<RouteConnection>
+  private readonly connectionWrappers: ReadonlyArray<SimpleRouteConnection>
   private readonly obstacleSetValue: ObstacleSet
   private readonly boundsValue: RouteBounds
 
-  public constructor(private readonly json: SimpleRouteJson) {
+  public constructor(private readonly json: SerializedSimpleRouteJson) {
     this.layerMapperValue = new LayerMapper(json.layerCount)
     this.connectionWrappers = json.connections.map((connection) =>
-      RouteConnection.fromJson(connection),
+      SimpleRouteConnection.fromJson(connection),
     )
     this.obstacleSetValue = ObstacleSet.fromJson(json.obstacles)
     this.boundsValue = RouteBounds.fromJson(json.bounds)
@@ -252,13 +266,27 @@ export class RouteInput {
    * Creates a validated route-document wrapper with canonicalized config.
    *
    * @param json - Serialized route document.
-   * @returns Normalized route input wrapper.
+   * @returns Normalized route document wrapper.
    */
-  public static fromJson(json: SimpleRouteJson): RouteInput {
+  public static fromJson(json: SerializedSimpleRouteJson): SimpleRouteJson {
     const normalizedJson = normalizeJson(json)
     validateNormalizedJson(normalizedJson)
 
-    return new RouteInput(normalizedJson)
+    return new SimpleRouteJson(normalizedJson)
+  }
+
+  /**
+   * Reuses an existing route-document wrapper or normalizes serialized input.
+   *
+   * @param input - Existing wrapper or serialized route document.
+   * @returns Route document wrapper.
+   */
+  public static from(
+    input: SimpleRouteJson | SerializedSimpleRouteJson,
+  ): SimpleRouteJson {
+    return input instanceof SimpleRouteJson
+      ? input
+      : SimpleRouteJson.fromJson(input)
   }
 
   /**
@@ -266,7 +294,7 @@ export class RouteInput {
    *
    * @returns Canonicalized route JSON payload.
    */
-  public toJson(): SimpleRouteJson {
+  public toJson(): SerializedSimpleRouteJson {
     return cloneValue(this.json)
   }
 
@@ -282,7 +310,7 @@ export class RouteInput {
    *
    * @returns Read-only connections in serialized order.
    */
-  public get connections(): ReadonlyArray<RouteConnection> {
+  public get connections(): ReadonlyArray<SimpleRouteConnection> {
     return [...this.connectionWrappers]
   }
 
@@ -291,7 +319,7 @@ export class RouteInput {
    *
    * @returns Read-only obstacle wrappers.
    */
-  public get obstacles(): ReadonlyArray<BoardObstacle> {
+  public get obstacles(): ReadonlyArray<Obstacle> {
     return this.obstacleSetValue.toArray()
   }
 
@@ -318,6 +346,20 @@ export class RouteInput {
    */
   public get allowJumpers(): boolean {
     return this.json.allowJumpers ?? false
+  }
+
+  /**
+   * Returns the canonical document minimum trace width.
+   */
+  public get minTraceWidth(): number {
+    return this.json.minTraceWidth
+  }
+
+  /**
+   * Returns the default obstacle margin when configured.
+   */
+  public get defaultObstacleMargin(): number | undefined {
+    return this.json.defaultObstacleMargin
   }
 
   /**
@@ -357,15 +399,70 @@ export class RouteInput {
   }
 
   /**
-   * Creates a new route input with an appended obstacle.
+   * Returns any pre-supplied routed traces on the document.
+   *
+   * @returns Cloned trace list.
+   */
+  public get traces(): ReadonlyArray<SimplifiedPcbTrace> {
+    return cloneValue(this.json.traces ?? [])
+  }
+
+  /**
+   * Creates a new route document with an appended obstacle.
    *
    * @param obstacle - Obstacle to append.
-   * @returns New route input containing the extra obstacle.
+   * @returns New route document containing the extra obstacle.
    */
-  public withObstacle(obstacle: BoardObstacle): RouteInput {
-    return RouteInput.fromJson({
-      ...this.toJson(),
-      obstacles: [...this.json.obstacles, obstacle.toJson()],
+  public withObstacle(obstacle: Obstacle): SimpleRouteJson {
+    return this.withObstacles([...this.obstacles, obstacle])
+  }
+
+  /**
+   * Creates a new route document with an updated obstacle collection.
+   *
+   * @param obstacles - Replacement obstacle wrappers.
+   * @returns New route document with the provided obstacles.
+   */
+  public withObstacles(obstacles: ReadonlyArray<Obstacle>): SimpleRouteJson {
+    return SimpleRouteJson.fromJson({
+      ...this.json,
+      obstacles: obstacles.map((obstacle) => obstacle.toJson()),
+    })
+  }
+
+  /**
+   * Creates a new route document with an updated connection collection.
+   *
+   * @param connections - Replacement connection wrappers.
+   * @returns New route document with the provided connections.
+   */
+  public withConnections(
+    connections: ReadonlyArray<SimpleRouteConnection>,
+  ): SimpleRouteJson {
+    return SimpleRouteJson.fromJson({
+      ...this.json,
+      connections: connections.map((connection) => connection.toJson()),
+    })
+  }
+
+  /**
+   * Creates a new route document with updated connections and obstacles.
+   *
+   * @param params - Replacement domain collections.
+   * @returns New route document with the provided collections.
+   */
+  public withDocumentParts(params: {
+    connections?: ReadonlyArray<SimpleRouteConnection>
+    obstacles?: ReadonlyArray<Obstacle>
+  }): SimpleRouteJson {
+    return SimpleRouteJson.fromJson({
+      ...this.json,
+      connections:
+        params.connections?.map((connection) => connection.toJson()) ??
+        this.json.connections,
+      obstacles:
+        params.obstacles?.map((obstacle) => obstacle.toJson()) ??
+        this.json.obstacles,
     })
   }
 

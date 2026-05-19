@@ -1,14 +1,12 @@
-import type { Obstacle } from "../../types/index.ts"
+import type { SerializedObstacle } from "../../types/index.ts"
 import { RouteBounds } from "../board/RouteBounds.ts"
-import { BoardObstacle } from "./BoardObstacle.ts"
+import { Obstacle } from "./Obstacle.ts"
 
 /**
- * Collection owner for board-obstacle queries and aggregation.
+ * Collection owner for obstacle queries and aggregation.
  */
 export class ObstacleSet {
-  public constructor(
-    private readonly obstacles: ReadonlyArray<BoardObstacle>,
-  ) {}
+  public constructor(private readonly obstacles: ReadonlyArray<Obstacle>) {}
 
   /**
    * Creates a collection wrapper around serialized obstacles.
@@ -16,8 +14,12 @@ export class ObstacleSet {
    * @param obstacles - Serialized obstacles.
    * @returns Wrapped obstacle collection.
    */
-  public static fromJson(obstacles: ReadonlyArray<Obstacle>): ObstacleSet {
-    return new ObstacleSet(obstacles.map((obstacle) => BoardObstacle.fromJson(obstacle)))
+  public static fromJson(
+    obstacles: ReadonlyArray<SerializedObstacle>,
+  ): ObstacleSet {
+    return new ObstacleSet(
+      obstacles.map((obstacle) => Obstacle.fromJson(obstacle)),
+    )
   }
 
   /**
@@ -25,7 +27,7 @@ export class ObstacleSet {
    *
    * @returns Serialized obstacle array.
    */
-  public toJson(): Obstacle[] {
+  public toJson(): SerializedObstacle[] {
     return this.obstacles.map((obstacle) => obstacle.toJson())
   }
 
@@ -34,7 +36,7 @@ export class ObstacleSet {
    *
    * @returns Read-only obstacle wrappers.
    */
-  public toArray(): ReadonlyArray<BoardObstacle> {
+  public toArray(): ReadonlyArray<Obstacle> {
     return [...this.obstacles]
   }
 
