@@ -6,6 +6,7 @@
     "start": "bun run cosmos",
     "cosmos": "cosmos",
     "cosmos:export": "cosmos-export",
+    "benchmark": "bun scripts/benchmark/index.ts",
     "typecheck": "bunx tsc --noEmit",
     "lint": "biome lint .",
     "format": "biome format --write .",
@@ -14,6 +15,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",
+    "@tscircuit/autorouting-dataset-01": "^1.0.53",
     "@types/bun": "latest",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3"
