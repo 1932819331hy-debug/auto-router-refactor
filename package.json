@@ -26,6 +26,7 @@
   "dependencies": {
     "@tscircuit/solver-utils": "^0.0.19",
     "@vitejs/plugin-react": "^6.0.2",
+    "graphics-debug": "^0.0.94",
     "react": "^19.2.6",
     "react-cosmos": "^7.3.0",
     "react-cosmos-plugin-vite": "^7.3.0",

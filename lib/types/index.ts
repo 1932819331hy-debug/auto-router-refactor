@@ -2,7 +2,6 @@ export * from "./capacity-mesh.ts"
 export type {
   CapacityMeshNodeInput,
   CapacityMeshNodeParams,
-  SerializableCapacityMeshNodeParams,
 } from "../model/capacity-mesh/CapacityMeshNode.ts"
 export * from "./ids.ts"
 export * from "./srj.ts"

@@ -8,7 +8,7 @@ const BORDER_EPSILON = 0.001
 /**
  * Serializable constructor shape for a capacity mesh node.
  */
-export interface SerializableCapacityMeshNodeParams {
+export interface CapacityMeshNodeParams {
   capacityMeshNodeId: CapacityMeshNodeId
   center: { x: number; y: number }
   width: number
@@ -27,14 +27,10 @@ export interface SerializableCapacityMeshNodeParams {
   _parent?: CapacityMeshNode
 }
 
-export type CapacityMeshNodeParams = SerializableCapacityMeshNodeParams
-
 /**
  * Accepted node input shape at API boundaries during class migration.
  */
-export type CapacityMeshNodeInput =
-  | CapacityMeshNode
-  | SerializableCapacityMeshNodeParams
+export type CapacityMeshNodeInput = CapacityMeshNode | CapacityMeshNodeParams
 
 /**
  * A rectangular free-space region produced by rectdiff and consumed by later
@@ -58,7 +54,7 @@ export class CapacityMeshNode {
   public _adjacentNodeIds?: CapacityMeshNodeId[]
   public _parent?: CapacityMeshNode
 
-  public constructor(params: SerializableCapacityMeshNodeParams) {
+  public constructor(params: CapacityMeshNodeParams) {
     this.capacityMeshNodeId = params.capacityMeshNodeId
     this.center = { ...params.center }
     this.width = params.width
@@ -97,7 +93,7 @@ export class CapacityMeshNode {
    * @returns New node instance.
    */
   public clone(
-    overrides: Partial<SerializableCapacityMeshNodeParams> = {},
+    overrides: Partial<CapacityMeshNodeParams> = {},
   ): CapacityMeshNode {
     return new CapacityMeshNode({
       ...this.toJSON(),
@@ -213,7 +209,7 @@ export class CapacityMeshNode {
    *
    * @returns JSON-safe node params.
    */
-  public toJSON(): SerializableCapacityMeshNodeParams {
+  public toJSON(): CapacityMeshNodeParams {
     return {
       capacityMeshNodeId: this.capacityMeshNodeId,
       center: { ...this.center },
