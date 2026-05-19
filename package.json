@@ -1,0 +1,33 @@
+{
+  "name": "autorouter",
+  "description": "Bun workspace for autorouter experiments and Cosmic fixtures",
+  "type": "module",
+  "scripts": {
+    "start": "bun run cosmos",
+    "cosmos": "cosmos",
+    "cosmos:export": "cosmos-export",
+    "typecheck": "bunx tsc --noEmit",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "check": "bun run typecheck && biome check .",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.15",
+    "@types/bun": "latest",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@tscircuit/solver-utils": "^0.0.19",
+    "@vitejs/plugin-react": "^6.0.2",
+    "react": "^19.2.6",
+    "react-cosmos": "^7.3.0",
+    "react-cosmos-plugin-vite": "^7.3.0",
+    "react-dom": "^19.2.6",
+    "vite": "^8.0.13"
+  }
+}
