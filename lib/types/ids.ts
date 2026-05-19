@@ -1,0 +1,9 @@
+export type TraceId = string
+export type NetId = string
+export type BusId = string
+export type PointId = string
+export type OffBoardConnectionId = string
+export type ObstacleId = string
+export type RootConnectionName = string
+export type PointKey = string
+export type ConnectionTempId = string
