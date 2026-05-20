@@ -4,15 +4,15 @@ import {
   RoutePoint,
   SimpleRouteConnection,
   type SimpleRouteJson,
-} from "../model/index.ts"
+} from "../../model/index.ts"
 import type {
   ConnectionPoint,
   PointId,
   PointKey,
   SerializedSimpleRouteConnection,
   SerializedSimpleRouteJson,
-} from "../types/index.ts"
-import { DisjointSetUnion } from "./NetToPointPairsSolver/DisjointSetUnion.ts"
+} from "../../types/index.ts"
+import { DisjointSetUnion } from "./DisjointSetUnion.ts"
 
 type WeightedEdge<TPoint extends ConnectionPoint> = {
   from: TPoint

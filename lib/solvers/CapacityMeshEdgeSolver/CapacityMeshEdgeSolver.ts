@@ -4,11 +4,11 @@ import { BaseSolver } from "@tscircuit/solver-utils"
 import {
   CapacityMeshEdge as CapacityMeshEdgeModel,
   CapacityMeshNode,
-} from "../model/index.ts"
+} from "../../model/index.ts"
 import type {
   CapacityMeshEdge as CapacityMeshEdgeData,
   CapacityMeshNodeInput,
-} from "../types/index.ts"
+} from "../../types/index.ts"
 
 /**
  * Builds adjacency edges between capacity mesh nodes that share a border and at
@@ -85,6 +85,11 @@ export class CapacityMeshEdgeSolver extends BaseSolver {
    * @returns Rectangles for nodes and lines for current edges.
    */
   public override visualize(): GraphicsObject {
+    const layerFillColors: Record<string, string> = {
+      "0,1": "rgba(0,0,0,0.1)",
+      "0": "rgba(0,200,200,0.1)",
+      "1": "rgba(0,0,200,0.1)",
+    }
     const edgeCount = new Map<string, number>()
 
     for (const edge of this.edges) {
@@ -108,11 +113,8 @@ export class CapacityMeshEdgeSolver extends BaseSolver {
           },
           fill: node._containsObstacle
             ? "rgba(255,0,0,0.1)"
-            : ({
-                "0,1": "rgba(0,0,0,0.1)",
-                "0": "rgba(0,200,200,0.1)",
-                "1": "rgba(0,0,200,0.1)",
-              }[node.availableZ.join(",")] ?? "rgba(0,200,200,0.1)"),
+            : (layerFillColors[node.availableZ.join(",")] ??
+              "rgba(0,200,200,0.1)"),
           label: [
             node.capacityMeshNodeId,
             `availableZ: ${node.availableZ.join(",")}`,

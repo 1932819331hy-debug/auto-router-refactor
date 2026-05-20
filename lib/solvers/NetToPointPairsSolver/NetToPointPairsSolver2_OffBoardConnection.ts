@@ -1,8 +1,8 @@
 import type { GraphicsObject } from "graphics-debug"
-import { SimpleRouteConnection, SimpleRouteJson } from "../model/index.ts"
-import type { ConnectionPoint } from "../types/index.ts"
+import { SimpleRouteConnection, SimpleRouteJson } from "../../model/index.ts"
+import type { ConnectionPoint } from "../../types/index.ts"
 import { NetToPointPairsSolver } from "./NetToPointPairsSolver.ts"
-import { ConnectionPointDisjointSetUnion } from "./NetToPointPairsSolver2_OffBoardConnection/ConnectionPointDisjointSetUnion.ts"
+import { ConnectionPointDisjointSetUnion } from "../NetToPointPairsSolver2_OffBoardConnection/ConnectionPointDisjointSetUnion.ts"
 
 /**
  * Optimizes pair-expanded connections by allowing equivalent off-board points
