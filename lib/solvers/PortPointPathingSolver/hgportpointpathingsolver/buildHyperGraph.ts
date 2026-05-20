@@ -2,47 +2,16 @@ import { LayerMapper } from "../../../model/board/LayerMapper.ts"
 import type { RoutePoint } from "../../../model/connection/RoutePoint.ts"
 import type {
   CapacityMeshNode,
-  CapacityMeshNodeId,
   SimpleRouteConnection,
 } from "../../../model/index.ts"
 import type { SegmentPortPoint } from "../../AvailableSegmentPointSolver.ts"
+import { HyperGraph } from "./HyperGraph.ts"
+import { HyperGraphConnection } from "./HyperGraphConnection.ts"
+import { HyperGraphPort } from "./HyperGraphPort.ts"
+import { HyperGraphPortData } from "./HyperGraphPortData.ts"
+import type { HyperGraphRegion } from "./HyperGraphRegion.ts"
 
 const REGION_EPSILON = 1e-6
-
-export interface HyperGraphRegion {
-  regionId: CapacityMeshNodeId
-  node: CapacityMeshNode
-  ports: HyperGraphPort[]
-}
-
-export interface HyperGraphPortData {
-  portId: string
-  x: number
-  y: number
-  z: number
-  distToCentermostPortOnZ: number
-  regions: [HyperGraphRegion, HyperGraphRegion]
-}
-
-export interface HyperGraphPort {
-  portId: string
-  data: HyperGraphPortData
-  region1: HyperGraphRegion
-  region2: HyperGraphRegion
-}
-
-export interface HyperGraphConnection {
-  connectionId: string
-  mutuallyConnectedNetworkId: string
-  startRegion: HyperGraphRegion
-  endRegion: HyperGraphRegion
-  simpleRouteConnection: SimpleRouteConnection
-}
-
-export interface HyperGraph {
-  ports: HyperGraphPort[]
-  regions: HyperGraphRegion[]
-}
 
 /**
  * Builds the hypergraph and pair-expanded connection list consumed by the
@@ -57,19 +26,12 @@ export function buildHyperGraph(params: {
   segmentPortPoints: ReadonlyArray<SegmentPortPoint>
   layerCount: number
 }): { graph: HyperGraph; connections: HyperGraphConnection[] } {
-  const graph: HyperGraph = {
-    ports: [],
-    regions: [],
-  }
+  const graph = new HyperGraph()
   const connections: HyperGraphConnection[] = []
   const layerMapper = new LayerMapper(params.layerCount)
 
   for (const capacityMeshNode of params.capacityMeshNodes) {
-    graph.regions.push({
-      regionId: capacityMeshNode.capacityMeshNodeId,
-      node: capacityMeshNode,
-      ports: [],
-    })
+    graph.addRegion(capacityMeshNode)
   }
 
   const regionById = new Map(
@@ -88,24 +50,16 @@ export function buildHyperGraph(params: {
     }
 
     for (const z of segmentPortPoint.availableZ) {
-      const portData: HyperGraphPortData = {
-        portId: `${segmentPortPoint.segmentPortPointId}::${z}`,
-        x: segmentPortPoint.x,
-        y: segmentPortPoint.y,
+      const portData = new HyperGraphPortData(
+        `${segmentPortPoint.segmentPortPointId}::${z}`,
+        segmentPortPoint.x,
+        segmentPortPoint.y,
         z,
-        distToCentermostPortOnZ: segmentPortPoint.distToCentermostPortOnZ,
-        regions: [region1, region2],
-      }
-      const port: HyperGraphPort = {
-        portId: portData.portId,
-        data: portData,
-        region1,
-        region2,
-      }
-
-      graph.ports.push(port)
-      region1.ports.push(port)
-      region2.ports.push(port)
+        segmentPortPoint.distToCentermostPortOnZ,
+        [region1, region2],
+      )
+      const port = new HyperGraphPort(portData, region1, region2)
+      graph.addPort(port)
     }
   }
 
@@ -143,13 +97,15 @@ export function buildHyperGraph(params: {
       )
     }
 
-    connections.push({
-      connectionId: connection.name,
-      mutuallyConnectedNetworkId: connection.getRootName() ?? connection.name,
-      startRegion,
-      endRegion,
-      simpleRouteConnection: connection,
-    })
+    connections.push(
+      new HyperGraphConnection(
+        connection.name,
+        connection.getRootName() ?? connection.name,
+        startRegion,
+        endRegion,
+        connection,
+      ),
+    )
   }
 
   return { graph, connections }

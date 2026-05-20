@@ -2,6 +2,7 @@ import type { GraphicsObject } from "graphics-debug"
 import { SimpleRouteConnection, SimpleRouteJson } from "../model/index.ts"
 import type { ConnectionPoint } from "../types/index.ts"
 import { NetToPointPairsSolver } from "./NetToPointPairsSolver.ts"
+import { ConnectionPointDisjointSetUnion } from "./NetToPointPairsSolver2_OffBoardConnection/ConnectionPointDisjointSetUnion.ts"
 
 /**
  * Optimizes pair-expanded connections by allowing equivalent off-board points
@@ -9,9 +10,7 @@ import { NetToPointPairsSolver } from "./NetToPointPairsSolver.ts"
  */
 export class NetToPointPairsSolver2_OffBoardConnection extends NetToPointPairsSolver {
   private readonly originalSimpleRouteJson: SimpleRouteJson
-  private readonly connectionPointDsu: {
-    getGroup: (id: string) => string[]
-  }
+  private readonly connectionPointDsu: ConnectionPointDisjointSetUnion
   private readonly connectionPointMap = new Map<string, ConnectionPoint>()
   private readonly unprocessedConnections
 
@@ -35,50 +34,7 @@ export class NetToPointPairsSolver2_OffBoardConnection extends NetToPointPairsSo
       .map((point) => point.pointId)
       .filter((pointId): pointId is string => typeof pointId === "string")
 
-    const connectionPointDsu = new (class {
-      private readonly parent = new Map<string, string>()
-
-      public constructor(ids: ReadonlyArray<string>) {
-        for (const id of ids) {
-          this.parent.set(id, id)
-        }
-      }
-
-      public find(id: string): string {
-        const parentId = this.parent.get(id)
-        if (!parentId) {
-          throw new Error(`Unknown off-board point "${id}"`)
-        }
-        if (parentId === id) {
-          return id
-        }
-
-        const rootId = this.find(parentId)
-        this.parent.set(id, rootId)
-        return rootId
-      }
-
-      public union(leftId: string, rightId: string): void {
-        const leftRootId = this.find(leftId)
-        const rightRootId = this.find(rightId)
-        if (leftRootId !== rightRootId) {
-          this.parent.set(rightRootId, leftRootId)
-        }
-      }
-
-      public getGroup(id: string): string[] {
-        const rootId = this.find(id)
-        const group: string[] = []
-
-        for (const memberId of this.parent.keys()) {
-          if (this.find(memberId) === rootId) {
-            group.push(memberId)
-          }
-        }
-
-        return group
-      }
-    })(pointIds)
+    const connectionPointDsu = new ConnectionPointDisjointSetUnion(pointIds)
 
     const onBoardConnections = []
     for (const connection of originalJson.connections) {

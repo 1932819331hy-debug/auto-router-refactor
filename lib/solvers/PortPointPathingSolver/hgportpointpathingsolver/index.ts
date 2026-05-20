@@ -1,7 +1,6 @@
-export type {
-  HyperGraph,
-  HyperGraphConnection,
-  HyperGraphPort,
-  HyperGraphRegion,
-} from "./buildHyperGraph.ts"
+export { HyperGraph } from "./HyperGraph.ts"
+export { HyperGraphConnection } from "./HyperGraphConnection.ts"
+export { HyperGraphPort } from "./HyperGraphPort.ts"
+export { HyperGraphPortData } from "./HyperGraphPortData.ts"
+export type { HyperGraphRegion } from "./HyperGraphRegion.ts"
 export { buildHyperGraph } from "./buildHyperGraph.ts"
