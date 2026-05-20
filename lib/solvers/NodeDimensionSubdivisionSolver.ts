@@ -1,3 +1,4 @@
+import type { GraphicsObject } from "graphics-debug"
 import { BaseSolver } from "@tscircuit/solver-utils"
 
 import { CapacityMeshNode } from "../model/index.ts"
@@ -82,6 +83,25 @@ export class NodeDimensionSubdivisionSolver extends BaseSolver {
    */
   public override getOutput(): CapacityMeshNode[] {
     return this.outputNodes
+  }
+
+  /**
+   * Returns a debug rendering of the subdivided node grid.
+   *
+   * @returns Rectangle overlays for each output node.
+   */
+  public override visualize(): GraphicsObject {
+    return {
+      rects: this.outputNodes.map((node) => ({
+        center: node.center,
+        width: node.width,
+        height: node.height,
+        label: `${node.capacityMeshNodeId}\n${node.width.toFixed(2)}x${node.height.toFixed(2)}`,
+        layer: `z${node.availableZ.join(",")}`,
+        fill: "rgba(0, 200, 255, 0.08)",
+        stroke: "rgba(0, 120, 180, 0.5)",
+      })),
+    }
   }
 
   /**
