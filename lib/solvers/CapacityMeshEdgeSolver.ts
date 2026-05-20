@@ -1,3 +1,4 @@
+import type { GraphicsObject } from "graphics-debug"
 import { BaseSolver } from "@tscircuit/solver-utils"
 
 import {
@@ -16,6 +17,7 @@ import type {
 export class CapacityMeshEdgeSolver extends BaseSolver {
   public readonly nodes: CapacityMeshNode[]
   public edges: CapacityMeshEdgeData[]
+  private nodeMap?: Map<string, CapacityMeshNode>
 
   public constructor(nodes: CapacityMeshNodeInput[]) {
     super()
@@ -75,6 +77,94 @@ export class CapacityMeshEdgeSolver extends BaseSolver {
    */
   public override getOutput(): CapacityMeshEdgeData[] {
     return this.edges
+  }
+
+  /**
+   * Returns a debug visualization of mesh nodes and solved adjacency edges.
+   *
+   * @returns Rectangles for nodes and lines for current edges.
+   */
+  public override visualize(): GraphicsObject {
+    const edgeCount = new Map<string, number>()
+
+    for (const edge of this.edges) {
+      for (const nodeId of edge.nodeIds) {
+        edgeCount.set(nodeId, 1 + (edgeCount.get(nodeId) ?? 0))
+      }
+    }
+
+    const graphics: GraphicsObject = {
+      lines: [],
+      points: [],
+      rects: this.nodes.map((node) => {
+        const lowestZ = Math.min(...node.availableZ)
+
+        return {
+          width: Math.max(node.width - 2, node.width * 0.8),
+          height: Math.max(node.height - 2, node.height * 0.8),
+          center: {
+            x: node.center.x + lowestZ * node.width * 0.05,
+            y: node.center.y - lowestZ * node.width * 0.05,
+          },
+          fill: node._containsObstacle
+            ? "rgba(255,0,0,0.1)"
+            : ({
+                "0,1": "rgba(0,0,0,0.1)",
+                "0": "rgba(0,200,200,0.1)",
+                "1": "rgba(0,0,200,0.1)",
+              }[node.availableZ.join(",")] ?? "rgba(0,200,200,0.1)"),
+          label: [
+            node.capacityMeshNodeId,
+            `availableZ: ${node.availableZ.join(",")}`,
+            `target? ${node._containsTarget ?? false}`,
+            `obs? ${node._containsObstacle ?? false}`,
+            `conn: ${edgeCount.get(node.capacityMeshNodeId) ?? 0}`,
+          ].join("\n"),
+          layer: `z${node.availableZ.join(",")}`,
+        }
+      }),
+      circles: [],
+    }
+
+    if (!this.nodeMap) {
+      this.nodeMap = new Map<string, CapacityMeshNode>()
+      for (const node of this.nodes) {
+        this.nodeMap.set(node.capacityMeshNodeId, node)
+      }
+    }
+
+    for (const edge of this.edges) {
+      const nodeA = this.nodeMap.get(edge.nodeIds[0])
+      const nodeB = this.nodeMap.get(edge.nodeIds[1])
+      if (!nodeA || !nodeB) {
+        continue
+      }
+
+      const lowestZA = Math.min(...nodeA.availableZ)
+      const lowestZB = Math.min(...nodeB.availableZ)
+      const adjustedNodeACenter = {
+        x: nodeA.center.x + lowestZA * nodeA.width * 0.05,
+        y: nodeA.center.y - lowestZA * nodeA.width * 0.05,
+      }
+      const adjustedNodeBCenter = {
+        x: nodeB.center.x + lowestZB * nodeB.width * 0.05,
+        y: nodeB.center.y - lowestZB * nodeB.width * 0.05,
+      }
+      const availableZ = Array.from(
+        new Set([...nodeA.availableZ, ...nodeB.availableZ]),
+      ).sort((left, right) => left - right)
+
+      graphics.lines?.push({
+        layer: `z${availableZ.join(",")}`,
+        points: [adjustedNodeACenter, adjustedNodeBCenter],
+        strokeDash:
+          nodeA.availableZ.join(",") === nodeB.availableZ.join(",")
+            ? undefined
+            : "10 5",
+      })
+    }
+
+    return graphics
   }
 
   /**
