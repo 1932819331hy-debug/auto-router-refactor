@@ -137,10 +137,8 @@ export class RouteBounds {
    */
   public overlaps(other: RouteBounds): boolean {
     return (
-      this.minX < other.maxX &&
-      this.maxX > other.minX &&
-      this.minY < other.maxY &&
-      this.maxY > other.minY
+      Math.max(this.minX, other.minX) < Math.min(this.maxX, other.maxX) &&
+      Math.max(this.minY, other.minY) < Math.min(this.maxY, other.maxY)
     )
   }
 
